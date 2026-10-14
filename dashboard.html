@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astrix — CSI Stress / Lie Detector Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- ══════════════════ TOP BAR ══════════════════ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo">
+        <svg viewBox="0 0 40 40" fill="none" width="28" height="28">
+          <line x1="20" y1="2" x2="20" y2="38" stroke="url(#tl1)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="2" y1="20" x2="38" y2="20" stroke="url(#tl1)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="6.34" y1="6.34" x2="33.66" y2="33.66" stroke="url(#tl1)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="33.66" y1="6.34" x2="6.34" y2="33.66" stroke="url(#tl1)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="20" cy="20" r="4" fill="url(#tl2)"/>
+          <defs>
+            <linearGradient id="tl1" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00D4FF"/><stop offset="1" stop-color="#0066FF"/>
+            </linearGradient>
+            <linearGradient id="tl2" x1="16" y1="16" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00FFCC"/><stop offset="1" stop-color="#0066FF"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo-text">ASTRIX</span>
+        <span class="logo-sub">/ Operator Dashboard</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <!-- System status nodes -->
+      <div class="sys-nodes">
+        <div class="sys-node" id="node-esp-tx">
+          <span class="node-dot" id="dot-esp-tx"></span>
+          <span class="node-label">ESP32 Tx</span>
+        </div>
+        <div class="sys-node-line"></div>
+        <div class="sys-node" id="node-esp-rx">
+          <span class="node-dot" id="dot-esp-rx"></span>
+          <span class="node-label">ESP32 Rx</span>
+        </div>
+        <div class="sys-node-line"></div>
+        <div class="sys-node" id="node-watch">
+          <span class="node-dot" id="dot-watch"></span>
+          <span class="node-label">Galaxy Watch</span>
+        </div>
+        <div class="sys-node-line"></div>
+        <div class="sys-node" id="node-model">
+          <span class="node-dot" id="dot-model"></span>
+          <span class="node-label">LSTM Model</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="ws-status" id="ws-status">
+        <span class="ws-dot" id="ws-dot"></span>
+        <span id="ws-label">Demo Mode</span>
+      </div>
+      <div class="session-timer">
+        <span class="mono" id="session-time">00:00:00</span>
+      </div>
+      <button class="btn-icon" id="btn-settings" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════ MAIN GRID ══════════════════ -->
+  <main class="dashboard-grid">
+
+    <!-- ── COL 1: CSI Signal Panel ── -->
+    <section class="panel panel-csi" id="panel-csi">
+      <div class="panel-header">
+        <span class="panel-title">CSI Signal Stream</span>
+        <div class="panel-badges">
+          <span class="badge badge-live" id="csi-live-badge">● LIVE</span>
+          <span class="badge">256 subcarriers</span>
+          <span class="badge">5 GHz</span>
+        </div>
+      </div>
+
+      <div class="csi-canvas-wrap">
+        <canvas id="csi-canvas"></canvas>
+        <div class="csi-axis-y">
+          <span>+</span><span>0</span><span>−</span>
+        </div>
+      </div>
+
+      <div class="csi-subcarrier-wrap">
+        <div class="sub-label">Subcarrier Amplitude Heatmap</div>
+        <canvas id="heatmap-canvas" height="48"></canvas>
+      </div>
+
+      <div class="csi-meta">
+        <div class="meta-item">
+          <span class="meta-k">Sample Rate</span>
+          <span class="meta-v mono" id="sample-rate">100 Hz</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-k">Packets/s</span>
+          <span class="meta-v mono" id="pkt-rate">98</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-k">SNR</span>
+          <span class="meta-v mono" id="snr-val">24.3 dB</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-k">RSSI</span>
+          <span class="meta-v mono" id="rssi-val">−48 dBm</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── COL 2: Detection Meter ── -->
+    <section class="panel panel-detection" id="panel-detection">
+      <div class="panel-header">
+        <span class="panel-title">Detection Engine</span>
+        <span class="badge badge-model">LSTM v2.1</span>
+      </div>
+
+      <!-- Big verdict -->
+      <div class="verdict-wrap">
+        <div class="verdict-ring" id="verdict-ring">
+          <svg class="verdict-svg" viewBox="0 0 200 200">
+            <circle class="ring-track" cx="100" cy="100" r="82" />
+            <circle class="ring-fill" id="ring-fill" cx="100" cy="100" r="82"
+              stroke-dasharray="515" stroke-dashoffset="515" />
+          </svg>
+          <div class="verdict-inner">
+            <span class="verdict-label" id="verdict-label">ANALYZING</span>
+            <span class="verdict-pct" id="verdict-pct">—</span>
+            <span class="verdict-sub">confidence</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric bars -->
+      <div class="detection-bars">
+        <div class="det-row">
+          <span class="det-name">Stress Index</span>
+          <div class="det-bar-wrap">
+            <div class="det-bar" id="bar-stress">
+              <div class="det-fill det-fill--stress" id="fill-stress"></div>
+            </div>
+          </div>
+          <span class="det-val mono" id="val-stress">—</span>
+        </div>
+        <div class="det-row">
+          <span class="det-name">Deception Signal</span>
+          <div class="det-bar-wrap">
+            <div class="det-bar" id="bar-deception">
+              <div class="det-fill det-fill--deception" id="fill-deception"></div>
+            </div>
+          </div>
+          <span class="det-val mono" id="val-deception">—</span>
+        </div>
+        <div class="det-row">
+          <span class="det-name">Resp. Rate</span>
+          <div class="det-bar-wrap">
+            <div class="det-bar">
+              <div class="det-fill det-fill--resp" id="fill-resp"></div>
+            </div>
+          </div>
+          <span class="det-val mono" id="val-resp">—</span>
+        </div>
+        <div class="det-row">
+          <span class="det-name">Motion Artifact</span>
+          <div class="det-bar-wrap">
+            <div class="det-bar">
+              <div class="det-fill det-fill--motion" id="fill-motion"></div>
+            </div>
+          </div>
+          <span class="det-val mono" id="val-motion">—</span>
+        </div>
+      </div>
+
+      <!-- Inference log -->
+      <div class="inference-log" id="inference-log">
+        <div class="log-header">
+          <span>Inference Log</span>
+          <button class="log-clear" id="log-clear">Clear</button>
+        </div>
+        <div class="log-entries" id="log-entries"></div>
+      </div>
+    </section>
+
+    <!-- ── COL 3: Right panels ── -->
+    <div class="right-col">
+
+      <!-- Heart Rate -->
+      <section class="panel panel-hr" id="panel-hr">
+        <div class="panel-header">
+          <span class="panel-title">Heart Rate</span>
+          <span class="badge">Galaxy Watch 4</span>
+        </div>
+        <div class="hr-display">
+          <div class="hr-big">
+            <span class="hr-number" id="hr-number">--</span>
+            <span class="hr-unit">BPM</span>
+            <div class="hr-pulse-anim" id="hr-pulse-anim">
+              <svg viewBox="0 0 80 40" width="80" height="40">
+                <polyline id="hr-ecg-line" points="0,20 10,20 18,5 24,35 30,20 40,20 48,20 56,5 62,35 68,20 80,20"
+                  fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="hr-stats">
+            <div class="hrstat"><span>Min</span><span class="mono" id="hr-min">--</span></div>
+            <div class="hrstat"><span>Max</span><span class="mono" id="hr-max">--</span></div>
+            <div class="hrstat"><span>Avg</span><span class="mono" id="hr-avg">--</span></div>
+            <div class="hrstat"><span>HRV</span><span class="mono" id="hr-hrv">--</span></div>
+          </div>
+        </div>
+        <canvas id="hr-canvas" height="80"></canvas>
+        <div class="hr-zone" id="hr-zone">
+          <span class="zone-dot" id="zone-dot"></span>
+          <span id="zone-label">Waiting for data...</span>
+        </div>
+      </section>
+
+      <!-- Data Collection Controls -->
+      <section class="panel panel-controls" id="panel-controls">
+        <div class="panel-header">
+          <span class="panel-title">Data Collection</span>
+          <span class="badge mono" id="sample-count">0 samples</span>
+        </div>
+
+        <div class="ctrl-grid">
+          <div class="ctrl-item">
+            <label class="ctrl-label" for="max-samples">Max Samples</label>
+            <input class="ctrl-input mono" type="number" id="max-samples" value="1000" min="100" step="100"/>
+          </div>
+          <div class="ctrl-item">
+            <label class="ctrl-label" for="watch-ip">Watch IP</label>
+            <input class="ctrl-input mono" type="text" id="watch-ip" value="192.168.x.x" />
+          </div>
+          <div class="ctrl-item">
+            <label class="ctrl-label" for="append-data">Append Mode</label>
+            <label class="toggle">
+              <input type="checkbox" id="append-data" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="ctrl-item">
+            <label class="ctrl-label" for="auto-stop">Auto Stop</label>
+            <label class="toggle">
+              <input type="checkbox" id="auto-stop" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span class="mono progress-label" id="progress-label">0 / 1000</span>
+        </div>
+
+        <div class="ctrl-btns">
+          <button class="ctrl-btn ctrl-btn--start" id="btn-collect">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            Start Collection
+          </button>
+          <button class="ctrl-btn ctrl-btn--stop" id="btn-stop" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg>
+            Stop
+          </button>
+          <button class="ctrl-btn ctrl-btn--train" id="btn-train">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            Train Model
+          </button>
+        </div>
+
+        <!-- Training Progress -->
+        <div class="training-wrap" id="training-wrap" style="display:none">
+          <div class="train-header">
+            <span>Training LSTM Model</span>
+            <span class="mono" id="train-epoch">Epoch 0/50</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill progress-fill--train" id="train-fill"></div>
+          </div>
+          <div class="train-metrics">
+            <span>Loss: <span class="mono accent" id="train-loss">—</span></span>
+            <span>Val Loss: <span class="mono accent" id="train-val-loss">—</span></span>
+            <span>Acc: <span class="mono accent" id="train-acc">—</span></span>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /right-col -->
+
+  </main>
+
+  <!-- ══════════════════ BOTTOM EVENT LOG ══════════════════ -->
+  <footer class="bottom-bar">
+    <div class="event-log" id="event-log">
+      <span class="event-log-title">System Log</span>
+      <div class="events" id="events"></div>
+    </div>
+    <div class="bottom-actions">
+      <button class="ctrl-btn ctrl-btn--export" id="btn-export">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Session
+      </button>
+      <button class="ctrl-btn ctrl-btn--ws" id="btn-connect">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1.42 9a16 16 0 0121.16 0M5 12.55a11 11 0 0114.08 0M10.54 16.1a6 6 0 012.92 0M12 20h.01"/></svg>
+        Connect Backend
+      </button>
+    </div>
+  </footer>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Backend Connection</h3>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>WebSocket URL</label>
+          <input class="ctrl-input mono" id="ws-url" value="ws://localhost:8765" />
+        </div>
+        <div class="form-group">
+          <label>Serial Port (ESP32 Rx)</label>
+          <input class="ctrl-input mono" id="serial-port" value="/dev/ttyUSB0" />
+        </div>
+        <div class="form-group">
+          <label>Galaxy Watch Port</label>
+          <input class="ctrl-input mono" id="watch-port" value="5555" />
+        </div>
+        <p class="modal-hint">The Python backend should expose a WebSocket server at the URL above. The dashboard will stream CSI + HR data and display LSTM inference results in real time.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="ctrl-btn ctrl-btn--start" id="btn-ws-connect">Connect</button>
+        <button class="ctrl-btn ctrl-btn--stop" id="btn-ws-demo">Use Demo Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
